@@ -71,8 +71,12 @@ void ModbusRTUSlave::poll() {
         _buf[i] = _serial->read();
         i++;
       }
-    } while (micros() - startTime < _charTimeout && i < _bufSize);
-    while (micros() - startTime < _frameTimeout);
+    } while (micros() - startTime < _charTimeout && i < _bufSize); // TODO: can we rewrite this such that poll() is nonblocking?
+    while (micros() - startTime < _frameTimeout); // TODO: can this be non-blocking? record the starttime and check when we come back?
+                                                  // TODO: What if more data comes in while waiting for the frame timeout?
+
+    // TODO: Any actions to take if this is not addressed to us? Flush the buffer?
+    // TODO: what if there /is/ data available in the serial buffer?
     if (_serial->available() == 0 && (_buf[0] == _id || _buf[0] == 0) && _crc(i - 2) == _bytesToWord(_buf[i - 1], _buf[i - 2])) {
       switch (_buf[1]) {
         case 1: /* Read Coils */
