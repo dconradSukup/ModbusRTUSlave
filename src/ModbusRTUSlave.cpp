@@ -156,9 +156,10 @@ void ModbusRTUSlave::_processBoolRead(uint16_t numBools, BoolRead boolRead) {
   else if ((startAddress + quantity) > numBools) _exceptionResponse(2);
   else {
     for (uint8_t j = 0; j < quantity; j++) {
-      int8_t value = boolRead(startAddress + j);
-      if (value < 0) {
-        _exceptionResponse(4);
+      uint8_t err = 0;
+      int8_t value = boolRead(startAddress + j, &err);
+      if (err > 0) {
+        _exceptionResponse(err);
         return;
       }
       bitWrite(_buf[3 + (j >> 3)], j & 7, value);
@@ -175,9 +176,10 @@ void ModbusRTUSlave::_processWordRead(uint16_t numWords, WordRead wordRead) {
   else if ((startAddress + quantity) > numWords) _exceptionResponse(2);
   else {
     for (uint8_t j = 0; j < quantity; j++) {
-      int32_t value = wordRead(startAddress + j);
-      if (value < 0) {
-        _exceptionResponse(4);
+      uint8_t err = 0;
+      int32_t value = wordRead(startAddress + j, &err);
+      if (err > 0) {
+        _exceptionResponse(err);
         return;
       }
       _buf[3 + (j * 2)] = highByte(value);

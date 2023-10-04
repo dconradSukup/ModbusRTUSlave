@@ -8,9 +8,9 @@
 class ModbusRTUSlave {
   public:
     ModbusRTUSlave(Stream& serial, uint8_t *buf, uint16_t bufSize, uint8_t dePin = NO_DE_PIN, uint32_t responseDelay = 0);
-    typedef int8_t (*BoolRead)(uint16_t);
+    typedef int8_t (*BoolRead)(uint16_t, uint8_t*);
     typedef bool (*BoolWrite)(uint16_t, bool);
-    typedef int32_t (*WordRead)(uint16_t);
+    typedef int32_t (*WordRead)(uint16_t, uint8_t*);
     typedef bool (*WordWrite)(uint16_t, uint16_t);
     void configureCoils(uint16_t numCoils, BoolRead coilRead, BoolWrite coilWrite);
     void configureDiscreteInputs(uint16_t numDiscreteInputs, BoolRead discreteInputRead);
