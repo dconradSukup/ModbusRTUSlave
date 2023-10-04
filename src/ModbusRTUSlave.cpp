@@ -39,8 +39,8 @@ void ModbusRTUSlave::begin(uint8_t id, uint32_t baud, uint8_t config) {
   else if (config == SERIAL_8N2 || config == SERIAL_8E1 || config == SERIAL_8O1) bitsPerChar = 11;
   else bitsPerChar = 10;
   if (baud <= 19200) {
-    _charTimeout = (bitsPerChar * 2500000) / baud;
-    _frameTimeout = (bitsPerChar * 4500000) / baud;
+    _charTimeout = (bitsPerChar * 1500300) / baud;
+    _frameTimeout = (bitsPerChar * 3500000) / baud;
   } else {
     _charTimeout = (bitsPerChar * 1000000) / baud + 750;
     _frameTimeout = (bitsPerChar * 1000000) / baud + 1750;
