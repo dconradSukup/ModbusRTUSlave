@@ -62,33 +62,41 @@ void ModbusRTUSlave::poll() {
   if (_serial->available() > 0) {
     uint8_t i = 0;
     uint32_t startTime = 0;
+    bool respond = false;
     do {
       if (_serial->available() > 0) {
         startTime = micros();
         _buf[i] = _serial->read();
         i++;
       }
-    } while (micros() - startTime < _charTimeout && i < _bufSize); // TODO: can we rewrite this such that poll() is nonblocking?
-    while (micros() - startTime < _frameTimeout); // TODO: can this be non-blocking? record the starttime and check when we come back?
-                                                  // TODO: What if more data comes in while waiting for the frame timeout?
+    } while (micros() - startTime < _charTimeout && i < _bufSize);
 
-    // TODO: Any actions to take if this is not addressed to us? Flush the buffer?
-    // TODO: what if there /is/ data available in the serial buffer?
-    if (_serial->available() == 0 && (_buf[0] == _id || _buf[0] == 0) && _crc(i - 2) == _bytesToWord(_buf[i - 1], _buf[i - 2])) {
+    if (i >= 8) { /* minimum request length, given the FC subset we have implemented */
+      // may as well check all this while we wait for the frame timeout!
+      if ((_buf[0] == _id || _buf[0] == 0) && _crc(i - 2) == _bytesToWord(_buf[i - 1], _buf[i - 2])) {
+          respond = true;
+      }
+    }
+    if (respond == false) return; // may as well return now, frame is bad or not for us
+
+    while (micros() - startTime < _frameTimeout);
+
+    // If there is data in the buffer, abort and do a go-around. New message takes priority.
+    if (_serial->available() == 0 && respond) {
       switch (_buf[1]) {
-        case 1: /* Read Coils */
+        case FC_01_R_COILS: /* Read Coils */
           _processBoolRead(_numCoils, _coilRead);
           break;
-        case 2: /* Read Discrete Inputs */
+        case FC_02_R_DISCRETEINPUTS: /* Read Discrete Inputs */
           _processBoolRead(_numDiscreteInputs, _discreteInputRead);
           break;
-        case 3: /* Read Holding Registers */
+        case FC_03_R_HOLDINGREGISTERS: /* Read Holding Registers */
           _processWordRead(_numHoldingRegisters, _holdingRegisterRead);
           break;
-        case 4: /* Read Input Registers */
+        case FC_04_R_INPUTREGISTER: /* Read Input Registers */
           _processWordRead(_numInputRegisters, _inputRegisterRead);
           break;
-        case 5: /* Write Single Coil */
+        case FC_05_W_SINGLECOIL: /* Write Single Coil */
           {
             uint16_t address = _bytesToWord(_buf[2], _buf[3]);
             uint16_t value = _bytesToWord(_buf[4], _buf[5]);
@@ -98,7 +106,7 @@ void ModbusRTUSlave::poll() {
             else _write(6);
           }
           break;
-        case 6: /* Write Single Holding Register */
+        case FC_06_W_SINGLEREGISTER: /* Write Single Holding Register */
           {
             uint16_t address = _bytesToWord(_buf[2], _buf[3]);
             uint16_t value = _bytesToWord(_buf[4], _buf[5]);
@@ -107,7 +115,7 @@ void ModbusRTUSlave::poll() {
             else _write(6);
           }
           break;
-        case 15: /* Write Multiple Coils */
+        case FC_15_W_MULTIPLECOILS: /* Write Multiple Coils */
           {
             uint16_t startAddress = _bytesToWord(_buf[2], _buf[3]);
             uint16_t quantity = _bytesToWord(_buf[4], _buf[5]);
@@ -124,7 +132,7 @@ void ModbusRTUSlave::poll() {
             }
           }
           break;
-        case 16: /* Write Multiple Holding Registers */
+        case FC_16_W_MULTIPLEREGISTERS: /* Write Multiple Holding Registers */
           {
             uint16_t startAddress = _bytesToWord(_buf[2], _buf[3]);
             uint16_t quantity = _bytesToWord(_buf[4], _buf[5]);

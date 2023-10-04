@@ -3,6 +3,15 @@
 
 #define NO_DE_PIN 255
 
+#define FC_01_R_COILS 1
+#define FC_02_R_DISCRETEINPUTS 2
+#define FC_03_R_HOLDINGREGISTERS 3
+#define FC_04_R_INPUTREGISTER 4
+#define FC_05_W_SINGLECOIL 5
+#define FC_06_W_SINGLEREGISTER 6
+#define FC_15_W_MULTIPLECOILS 15
+#define FC_16_W_MULTIPLEREGISTERS 16
+
 #include "Arduino.h"
 
 class ModbusRTUSlave {
