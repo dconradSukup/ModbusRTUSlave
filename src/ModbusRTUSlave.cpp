@@ -32,23 +32,20 @@ void ModbusRTUSlave::configureInputRegisters(uint16_t numInputRegisters, WordRea
 
 void ModbusRTUSlave::begin(uint8_t id, uint32_t baud, uint8_t config) {
   _id = id;
+  uint32_t bitsPerChar;
   uint32_t startTime = micros();
-  if (baud > 19200) {
-    _charTimeout = 750;
-    _frameTimeout = 1750;
+
+  if (config == SERIAL_8E2 || config == SERIAL_8O2) bitsPerChar = 12;
+  else if (config == SERIAL_8N2 || config == SERIAL_8E1 || config == SERIAL_8O1) bitsPerChar = 11;
+  else bitsPerChar = 10;
+  if (baud <= 19200) {
+    _charTimeout = (bitsPerChar * 2500000) / baud;
+    _frameTimeout = (bitsPerChar * 4500000) / baud;
+  } else {
+    _charTimeout = (bitsPerChar * 1000000) / baud + 750;
+    _frameTimeout = (bitsPerChar * 1000000) / baud + 1750;
   }
-  else if (config == 0x2E || config == 0x3E) {
-    _charTimeout = 18000000/baud;
-    _frameTimeout = 42000000/baud;
-  }
-  else if (config == 0x0E || config == 0x26 || config == 0x36) {
-    _charTimeout = 16500000/baud;
-    _frameTimeout = 38500000/baud;
-  }
-  else {
-    _charTimeout = 15000000/baud;
-    _frameTimeout = 35000000/baud;
-  }
+
   if (_dePin != 255) {
     digitalWrite(_dePin, LOW);
     pinMode(_dePin, OUTPUT);
