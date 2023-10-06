@@ -288,9 +288,10 @@ bool ModbusRTUSlave::_readRequest() {
       numBytes++;
     }
   } while (micros() - startTime <= _charTimeout && numBytes < MODBUS_RTU_SLAVE_BUF_SIZE);
+  /* if we can discard the request for any reason, leave without waiting for frame timeout */
+  if (!(!_serial->available() && (_buf[0] == _id || _buf[0] == 0) && _crc(numBytes - 2) == _bytesToWord(_buf[numBytes - 1], _buf[numBytes - 2]))) return false;
   while (micros() - startTime < _frameTimeout);
-  if (!_serial->available() && (_buf[0] == _id || _buf[0] == 0) && _crc(numBytes - 2) == _bytesToWord(_buf[numBytes - 1], _buf[numBytes - 2])) return true;
-  else return false;
+  return true;
 }
 
 void ModbusRTUSlave::_writeResponse(uint8_t len) {
