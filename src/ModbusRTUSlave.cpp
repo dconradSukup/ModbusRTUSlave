@@ -58,9 +58,11 @@ void ModbusRTUSlave::configureDiscreteInputs(bool discreteInputs[], uint16_t num
   _numDiscreteInputs = numDiscreteInputs;
 }
 
-void ModbusRTUSlave::configureHoldingRegisters(uint16_t holdingRegisters[], uint16_t numHoldingRegisters) {
+void ModbusRTUSlave::configureHoldingRegisters(uint16_t holdingRegisters[], uint16_t numHoldingRegisters, read_cb_t* read_cb, write_cb_t* write_cb) {
   _holdingRegisters = holdingRegisters;
   _numHoldingRegisters = numHoldingRegisters;
+  _holdingRegisters_readCB = read_cb;
+  _holdingRegisters_writeCB = write_cb;
 }
 
 void ModbusRTUSlave::configureInputRegisters(uint16_t inputRegisters[], uint16_t numInputRegisters) {
@@ -178,6 +180,9 @@ void ModbusRTUSlave::_processReadHoldingRegisters() {
     for (uint16_t i = 0; i < quantity; i++) {
       _buf[3 + (i * 2)] = highByte(_holdingRegisters[startAddress + i]);
       _buf[4 + (i * 2)] = lowByte(_holdingRegisters[startAddress + i]);
+      if (_holdingRegisters_readCB[startAddress + i] != nullptr){
+        _holdingRegisters_readCB[startAddress + i]();
+      }
     }
     _writeResponse(3 + _buf[2]);
   }
@@ -218,6 +223,10 @@ void ModbusRTUSlave::_processWriteSingleHoldingRegister() {
   else if (address >= _numHoldingRegisters) _exceptionResponse(2);
   else {
     _holdingRegisters[address] = value;
+    // TODO: Should this be before or after writing to array? Should it be mutually exclusive?
+    if (_holdingRegisters_writeCB[address] != nullptr){ // if callback exists, run it
+      _holdingRegisters_writeCB[address](value);
+    }
     _writeResponse(6);
   }
 }
@@ -244,7 +253,12 @@ void ModbusRTUSlave::_processWriteMultipleHoldingRegisters() {
   else if (quantity > _numHoldingRegisters || startAddress > (_numHoldingRegisters - quantity)) _exceptionResponse(2);
   else {
     for (uint16_t i = 0; i < quantity; i++) {
-      _holdingRegisters[startAddress + i] = _bytesToWord(_buf[i * 2 + 7], _buf[i * 2 + 8]);
+      uint16_t value = _bytesToWord(_buf[i * 2 + 7], _buf[i * 2 + 8]);
+      _holdingRegisters[startAddress + i] = value;
+      // TODO: Should this be before or after writing to array? Should it be mutually exclusive?
+      if (_holdingRegisters_writeCB[startAddress + i] != nullptr){ // if callback exists, run it
+        _holdingRegisters_writeCB[startAddress + i](value);
+      }
     }
     _writeResponse(6);
   }

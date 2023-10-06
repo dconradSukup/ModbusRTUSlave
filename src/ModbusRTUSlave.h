@@ -19,9 +19,13 @@ class ModbusRTUSlave {
     #ifdef HAVE_CDCSERIAL
     ModbusRTUSlave(Serial_& serial, uint8_t dePin = NO_DE_PIN);
     #endif
+
+    typedef void (*read_cb_t)();  // read callbacks should be "void func()"
+    typedef void (*write_cb_t)(uint16_t); // write callbacks should be "void func(uint16_t val)"
+
     void configureCoils(bool coils[], uint16_t numCoils);
     void configureDiscreteInputs(bool discreteInputs[], uint16_t numDiscreteInputs);
-    void configureHoldingRegisters(uint16_t holdingRegisters[], uint16_t numHoldingRegisters);
+    void configureHoldingRegisters(uint16_t holdingRegisters[], uint16_t numHoldingRegisters, read_cb_t* holdingRegisters_readCB, write_cb_t* holdingRegisters_writeCB);
     void configureInputRegisters(uint16_t inputRegisters[], uint16_t numInputRegisters);
     void begin(uint8_t id, uint32_t baud, uint8_t config = SERIAL_8N1);
     void poll();
@@ -40,6 +44,8 @@ class ModbusRTUSlave {
     bool *_coils;
     bool *_discreteInputs;
     uint16_t *_holdingRegisters;
+    read_cb_t* _holdingRegisters_readCB;
+    write_cb_t* _holdingRegisters_writeCB;
     uint16_t *_inputRegisters;
     uint16_t _numCoils = 0;
     uint16_t _numDiscreteInputs = 0;
