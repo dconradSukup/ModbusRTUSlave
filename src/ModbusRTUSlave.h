@@ -4,6 +4,8 @@
 #define MODBUS_RTU_SLAVE_BUF_SIZE 256
 #define NO_DE_PIN 255
 #define NO_ID 0
+#define REG_WRITE_BIT 0x02
+#define REG_READ_BIT 0x01
 
 #include "Arduino.h"
 #ifdef __AVR__
@@ -25,7 +27,8 @@ class ModbusRTUSlave {
 
     void configureCoils(bool coils[], uint16_t numCoils);
     void configureDiscreteInputs(bool discreteInputs[], uint16_t numDiscreteInputs);
-    void configureHoldingRegisters(uint16_t holdingRegisters[], uint16_t numHoldingRegisters, read_cb_t* holdingRegisters_readCB, write_cb_t* holdingRegisters_writeCB);
+    void configureHoldingRegisters(uint16_t holdingRegisters[], uint16_t numHoldingRegisters, uint8_t* holdingregisters_readWrite,\
+                                    read_cb_t* holdingRegisters_readCB, write_cb_t* holdingRegisters_writeCB);
     void configureInputRegisters(uint16_t inputRegisters[], uint16_t numInputRegisters);
     void begin(uint8_t id, uint32_t baud, uint8_t config = SERIAL_8N1);
     void poll();
@@ -46,6 +49,7 @@ class ModbusRTUSlave {
     uint16_t *_holdingRegisters;
     read_cb_t* _holdingRegisters_readCB;
     write_cb_t* _holdingRegisters_writeCB;
+    uint8_t* _holdingRegisters_readWrite;
     uint16_t *_inputRegisters;
     uint16_t _numCoils = 0;
     uint16_t _numDiscreteInputs = 0;
