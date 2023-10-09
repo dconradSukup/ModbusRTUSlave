@@ -6,6 +6,7 @@
 #define NO_ID 0
 #define REG_WRITE_BIT 0x02
 #define REG_READ_BIT 0x01
+#define REG_BROADCAST_WRITE_BIT 0x04
 
 #include "Arduino.h"
 #ifdef __AVR__
