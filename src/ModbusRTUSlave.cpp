@@ -183,13 +183,14 @@ void ModbusRTUSlave::_processReadHoldingRegisters() {
       if (_holdingRegisters_readWrite[startAddress + i] & REG_READ_BIT){
         _buf[3 + (i * 2)] = highByte(_holdingRegisters[startAddress + i]);
         _buf[4 + (i * 2)] = lowByte(_holdingRegisters[startAddress + i]);
-        if (_holdingRegisters_readCB[startAddress + i] != nullptr){
-          _holdingRegisters_readCB[startAddress + i]();
-        }
       } else {
         /* just return zeros maybe? */
         _buf[3 + (i * 2)] = 0;
         _buf[4 + (i * 2)] = 0;
+      }
+      // run callback regardless of permissions
+      if (_holdingRegisters_readCB[startAddress + i] != nullptr){
+          _holdingRegisters_readCB[startAddress + i]();
       }
     }
     _writeResponse(3 + _buf[2]);
@@ -232,10 +233,10 @@ void ModbusRTUSlave::_processWriteSingleHoldingRegister() {
   else {
     if (_holdingRegisters_readWrite[address] & REG_WRITE_BIT){
       _holdingRegisters[address] = value;
-      // TODO: Should this be before or after writing to array? Should it be mutually exclusive?
-      if (_holdingRegisters_writeCB[address] != nullptr){ // if callback exists, run it
+    }
+    // run callback regardless of write permissions - this allows operations without modifying value
+    if (_holdingRegisters_writeCB[address] != nullptr){ // if callback exists, run it
         _holdingRegisters_writeCB[address](value);
-      }
     }
     _writeResponse(6);
   }
@@ -266,10 +267,10 @@ void ModbusRTUSlave::_processWriteMultipleHoldingRegisters() {
       if (_holdingRegisters_readWrite[startAddress + i] & REG_WRITE_BIT){
         uint16_t value = _bytesToWord(_buf[i * 2 + 7], _buf[i * 2 + 8]);
         _holdingRegisters[startAddress + i] = value;
-        // TODO: Should this be before or after writing to array? Should it be mutually exclusive?
-        if (_holdingRegisters_writeCB[startAddress + i] != nullptr){ // if callback exists, run it
+      }
+      // run callback regardless of write permissions - this allows operations without modifying value
+      if (_holdingRegisters_writeCB[startAddress + i] != nullptr){ // if callback exists, run it
           _holdingRegisters_writeCB[startAddress + i](value);
-        }
       }
     }
     _writeResponse(6);
