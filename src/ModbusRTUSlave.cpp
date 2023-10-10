@@ -265,9 +265,9 @@ void ModbusRTUSlave::_processWriteMultipleHoldingRegisters() {
   else if (quantity > _numHoldingRegisters || startAddress > (_numHoldingRegisters - quantity)) _exceptionResponse(2);
   else {
     for (uint16_t i = 0; i < quantity; i++) {
-      if ((_buf[0] != 0 && (_holdingRegisters_readWrite[address] & REG_WRITE_BIT)) || \
-          (_buf[0] == 0 && (_holdingRegisters_readWrite[address] & REG_BROADCAST_WRITE_BIT))){
-        uint16_t value = _bytesToWord(_buf[i * 2 + 7], _buf[i * 2 + 8]);
+      uint16_t value = _bytesToWord(_buf[i * 2 + 7], _buf[i * 2 + 8]);
+      if ((_buf[0] != 0 && (_holdingRegisters_readWrite[startAddress] & REG_WRITE_BIT)) || \
+          (_buf[0] == 0 && (_holdingRegisters_readWrite[startAddress] & REG_BROADCAST_WRITE_BIT))){
         _holdingRegisters[startAddress + i] = value;
       }
       // run callback regardless of write permissions - this allows operations without modifying value
