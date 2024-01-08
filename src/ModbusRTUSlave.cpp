@@ -73,7 +73,7 @@ void ModbusRTUSlave::poll() {
 
     if (i >= 8) { /* minimum request length, given the FC subset we have implemented */
       // may as well check all this while we wait for the frame timeout!
-      if ((_buf[0] == _id || _buf[0] == 0) && _crc(i - 2) == _bytesToWord(_buf[i - 1], _buf[i - 2])) {
+      if ((_buf[0] <= 247 || _buf[0] == 0) && _crc(i - 2) == _bytesToWord(_buf[i - 1], _buf[i - 2])) {
           respond = true;
       }
     }
